@@ -174,7 +174,7 @@ export const registerUser = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email } = req.body;
+    const { name, email, fontSize, fontStyle } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -191,6 +191,8 @@ export const updateUserProfile = async (req, res) => {
     }
 
     user.name = name || user.name;
+    if (fontSize) user.fontSize = fontSize;
+    if (fontStyle) user.fontStyle = fontStyle;
 
     // Handle upload avatar baru
     if (req.file) {
