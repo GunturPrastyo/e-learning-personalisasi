@@ -25,8 +25,6 @@ import {
     getCompetencyMap,
     checkPreTestStatus,
     getStreakLeaderboard,
-    getUserStatus,
-    updateUserStatus,
  } from "../controllers/resultController.js";
 import { protect, admin } from "../middlewares/authMiddleware.js";
 
@@ -58,6 +56,5 @@ router.route("/recommendations").get(protect, getLearningRecommendations);
 router.route("/topics-to-reinforce").get(protect, getTopicsToReinforce);
 router.route("/streak").get(protect, getDailyStreak); 
 router.route("/check-pre-test").get(protect, checkPreTestStatus);
-router.route("/user-status").get(protect, getUserStatus).put(protect, updateUserStatus);
 
 export default router;

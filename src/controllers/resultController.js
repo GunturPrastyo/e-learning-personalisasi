@@ -1943,40 +1943,6 @@ const checkPreTestStatus = async (req, res) => {
   }
 };
 
-// @desc    Ambil status user (tur guide & streak)
-const getUserStatus = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('hasSeenModulTour hasSeenProfileTour hasSeenModuleDetailTour hasSeenAnalyticsTour lastStreakShownDate');
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Error fetching user status:", error);
-    res.status(500).json({ message: "Server Error" });
-  }
-};
-
-// @desc    Update status user (tur guide & streak)
-const updateUserStatus = async (req, res) => {
-  try {
-    const { key, value } = req.body;
-    const allowedKeys = ['hasSeenModulTour', 'hasSeenProfileTour', 'hasSeenModuleDetailTour', 'hasSeenAnalyticsTour', 'lastStreakShownDate'];
-    
-    if (!allowedKeys.includes(key)) {
-      return res.status(400).json({ message: "Invalid status key" });
-    }
-
-    const update = {};
-    update[key] = value;
-
-    await User.findByIdAndUpdate(req.user._id, update);
-    res.status(200).json({ message: "Status updated" });
-  } catch (error) {
-    console.error("Error updating user status:", error);
-    res.status(500).json({ message: "Server Error" });
-  }
-};
-
-
 export {
     createResult, getResults, getResultsByUser, submitTest, logStudyTime,
     getStudyTime, getAnalytics, getDailyStreak, getWeeklyActivity,
@@ -1990,5 +1956,4 @@ export {
     generateCertificate, checkPreTestStatus, 
     recalculateUserLearningLevel, 
     isModuleLockedForUser,
-    getUserStatus, updateUserStatus,
 };

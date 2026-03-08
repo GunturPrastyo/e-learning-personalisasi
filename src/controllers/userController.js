@@ -7,7 +7,7 @@ import User from "../models/User.js";
 import Feature from "../models/Feature.js"; 
 import Modul from "../models/Modul.js";
 
-import fs from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
 import sendEmail from "../utils/sendEmail.js";
@@ -102,7 +102,7 @@ export const registerUser = async (req, res) => {
 
     // Buat payload token berisi data user sementara (Stateless Registration)
     const userPayload = {
-      name, email, password: hashedPassword, role: role === "admin" ? "admin" : "user"
+      name, email, password: hashedPassword, role: "user" // Force role user untuk registrasi publik
     };
 
     // Generate JWT Token (berlaku 1 jam)
@@ -200,10 +200,11 @@ export const updateUserProfile = async (req, res) => {
       if (user.avatar && !user.avatar.startsWith("http") && !user.avatar.includes("placeholder")) {
         const avatarFileName = path.basename(user.avatar);
         const oldPath = path.join(__dirname, "..", "..", "public", "uploads", avatarFileName);
-        if (fs.existsSync(oldPath)) {
-          try {
-            fs.unlinkSync(oldPath);
-          } catch (err) {
+        try {
+          await fs.access(oldPath); // Cek apakah file ada
+          await fs.unlink(oldPath); // Hapus secara async
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
             console.error("Gagal menghapus avatar lama:", err);
           }
         }
@@ -807,5 +808,38 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ message: "Terjadi kesalahan server" });
+  }
+};
+
+// ========================= GET USER STATUS (TOUR & STREAK) =========================
+export const getUserStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('hasSeenModulTour hasSeenProfileTour hasSeenModuleDetailTour hasSeenAnalyticsTour lastStreakShownDate');
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// ========================= UPDATE USER STATUS =========================
+export const updateUserStatus = async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    const allowedKeys = ['hasSeenModulTour', 'hasSeenProfileTour', 'hasSeenModuleDetailTour', 'hasSeenAnalyticsTour', 'lastStreakShownDate'];
+    
+    if (!allowedKeys.includes(key)) {
+      return res.status(400).json({ message: "Invalid status key" });
+    }
+
+    const update = {};
+    update[key] = value;
+
+    await User.findByIdAndUpdate(req.user.id, update);
+    res.status(200).json({ message: "Status updated" });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ message: "Server Error" });
   }
 };
