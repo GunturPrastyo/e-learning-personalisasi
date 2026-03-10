@@ -92,14 +92,14 @@ const updateUserStreak = async (userId) => {
       const uniqueDays = new Set();
       results.forEach(result => {
         const date = new Date(result.createdAt);
-        date.setHours(0, 0, 0, 0);
+        date.setUTCHours(0, 0, 0, 0);
         uniqueDays.add(date.getTime());
       });
       const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a);
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
       const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
       if (sortedDays[0] === today.getTime() || sortedDays[0] === yesterday.getTime()) {
         streak = 1;
