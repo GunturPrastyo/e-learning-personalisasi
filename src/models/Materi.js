@@ -12,6 +12,29 @@ const subMateriSchema = new mongoose.Schema({
   },
 });
 
+const practiceSchema = new mongoose.Schema({
+  topikId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Topik",
+  },
+  type: {
+    type: String,
+    enum: ['html', 'javascript'],
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  initialCode: { type: String, default: '' },
+  hint: { type: String, default: '' },
+  expectedOutputRegex: [{ type: String }],
+});
+
 const materiSchema = new mongoose.Schema(
   {
     modulId: {
@@ -30,6 +53,7 @@ const materiSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    practices: [practiceSchema], 
   },
   {
     timestamps: true, 
