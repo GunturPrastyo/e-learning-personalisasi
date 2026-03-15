@@ -15,6 +15,7 @@ import uploadRoutes from "./src/routes/uploadRoutes.js";
 import featureRoutes from "./src/routes/featureRoutes.js";
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import analiticRoutes from './src/routes/analiticRoutes.js'; 
+import praktikRoutes from './src/routes/praktikRoutes.js';
 import Modul from "./src/models/Modul.js";
 dotenv.config();
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/features", featureRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics', analiticRoutes);
+app.use('/api/praktik', praktikRoutes);
 
 // ====================== MONGODB CONNECT ======================
 mongoose
