@@ -52,6 +52,7 @@ const resultSchema = new mongoose.Schema(
         "post-test-topik",
         "study-session",
         "post-test-topik-progress", 
+        "praktik",
       ],
     },
     score: {
@@ -77,6 +78,9 @@ const resultSchema = new mongoose.Schema(
     topikId: { // Tambahkan field ini
       type: mongoose.Schema.Types.ObjectId,
       ref: "Topik",
+    },
+    practiceId: {
+      type: mongoose.Schema.Types.ObjectId,
     },
     // --- Field Baru yang Ditambahkan ---
     answers: {

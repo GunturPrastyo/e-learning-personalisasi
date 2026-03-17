@@ -1,17 +1,32 @@
 import Materi from "../models/Materi.js";
 import vm from "vm";
+import Result from "../models/Result.js";
+import User from "../models/User.js";
 
 export const getPraktikByTopicId = async (req, res) => {
   try {
     const { topicId } = req.params;
     // Karena practices adalah array di dalam model Materi
-    const materi = await Materi.findOne({ topikId: topicId }).select("practices");
+    const materi = await Materi.findOne({ topikId: topicId }).select("practices").lean();
     
     if (!materi || !materi.practices) {
       return res.status(200).json([]);
     }
 
-    res.status(200).json(materi.practices);
+    const results = await Result.find({
+      userId: req.user._id,
+      topikId: topicId,
+      testType: "praktik"
+    });
+
+    const completedPracticeIds = new Set(results.map(r => r.practiceId.toString()));
+
+    const practicesWithStatus = materi.practices.map(p => ({
+      ...p,
+      isCompleted: completedPracticeIds.has(p._id.toString())
+    }));
+
+    res.status(200).json(practicesWithStatus);
   } catch (error) {
     console.error("Gagal mengambil data praktik:", error);
     res.status(500).json({ message: "Terjadi kesalahan server" });
@@ -74,6 +89,30 @@ export const runPractice = async (req, res) => {
       if (validateCode(code, [])) {
         isAnswerCorrect = true;
       }
+    }
+
+    // Jika jawaban benar, simpan nilai keberhasilan ke dalam koleksi Result
+    if (isAnswerCorrect) {
+      await Result.findOneAndUpdate(
+        { userId: req.user._id, practiceId: practiceId, testType: "praktik" },
+        {
+          userId: req.user._id,
+          practiceId: practiceId,
+          testType: "praktik",
+          score: 100,
+          correct: 1,
+          total: 1,
+          timeTaken: 0, // Set default 0 atau sesuaikan bila kamu melacak timer di frontend
+          topikId: materi.topikId,
+          modulId: materi.modulId
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+
+      // Tandai topik ini sebagai selesai untuk membuka kunci topik selanjutnya
+      await User.findByIdAndUpdate(req.user._id, {
+        $addToSet: { topicCompletions: materi.topikId }
+      });
     }
 
     return res.status(200).json({
