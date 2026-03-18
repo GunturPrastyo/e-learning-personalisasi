@@ -17,7 +17,7 @@ export const askAITutor = async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: `Kamu adalah asisten tutor E-Learning yang sangat ramah dan sabar. 
 Tugas utamamu adalah menjawab pertanyaan siswa HANYA berdasarkan 'Konteks Materi' yang diberikan.
 ATURAN:
