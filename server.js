@@ -17,6 +17,7 @@ import notificationRoutes from './src/routes/notificationRoutes.js';
 import analiticRoutes from './src/routes/analiticRoutes.js'; 
 import praktikRoutes from './src/routes/praktikRoutes.js';
 import Modul from "./src/models/Modul.js";
+import aiTutorRoutes from "./src/routes/aiTutorRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -67,6 +68,7 @@ app.use("/api/topik", topikRoutes);
 app.use("/api/materi", materiRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
+app.use("/api/ai-tutor", aiTutorRoutes);
 
 app.use("/api/results", resultRoutes);
 app.use("/api/upload", uploadRoutes);
