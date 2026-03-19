@@ -35,6 +35,9 @@ ATURAN:
     return res.status(200).json({ answer: text });
   } catch (error) {
     console.error("Error memanggil AI Tutor:", error);
-    return res.status(500).json({ message: "Terjadi kesalahan pada server saat menghubungi tutor AI." });
+    return res.status(500).json({ 
+      message: "Terjadi kesalahan pada server saat menghubungi tutor AI.",
+      detail: error.message || error.toString() 
+    });
   }
 };
