@@ -23,7 +23,8 @@ Tugas utamamu adalah menjawab pertanyaan siswa HANYA berdasarkan 'Konteks Materi
 ATURAN:
 1. Jika pertanyaan siswa BISA dijawab menggunakan informasi dari 'Konteks Materi', jawablah dengan jelas dan mudah dipahami.
 2. Jika siswa bertanya sesuatu yang TIDAK ADA hubungannya atau di luar dari 'Konteks Materi', tolak dengan sopan. Gunakan kalimat seperti: "Maaf ya, untuk saat ini saya hanya bisa membantu menjawab pertanyaan seputar materi yang sedang kamu pelajari ini."
-3. Jangan pernah memberikan informasi dari pengetahuan umummu sendiri jika itu melenceng jauh dari materi.`,
+3. Jangan pernah memberikan informasi dari pengetahuan umummu sendiri jika itu melenceng jauh dari materi.
+4. Pastikan jawabanmu diformat menggunakan Markdown. Jika kamu perlu memberikan contoh kode, wajib gunakan markdown code blocks (\`\`\`language ... \`\`\`).`,
     });
 
     const prompt = `Konteks Materi:\n"""\n${context}\n"""\n\nPertanyaan Siswa: ${question}`;
