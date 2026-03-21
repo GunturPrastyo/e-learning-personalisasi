@@ -31,7 +31,8 @@ const practiceSchema = new mongoose.Schema({
     required: true,
   },
   initialCode: { type: String, default: '' },
-  hint: { type: String, default: '' },
+  hint: { type: String, default: '' }, // Dipertahankan untuk data lama (backward compatibility)
+  hints: [{ type: String }], // Ditambahkan untuk mendukung multiple hints
   expectedOutputRegex: [{ type: String }],
 });
 
