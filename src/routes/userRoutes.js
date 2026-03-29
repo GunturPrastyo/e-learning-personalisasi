@@ -16,6 +16,7 @@ import {
   resetPassword,
   verifyEmail,
   updateUser,
+  sendStudyReminders,
 } from "../controllers/userController.js";
 import { protect, admin } from "../middlewares/authMiddleware.js";
 import { upload } from "../middlewares/upload.js";
@@ -47,5 +48,8 @@ router.route("/")
 router.route("/:id")
   .delete(protect, admin, deleteUser) // DELETE /api/users/:id
   .put(protect, admin, updateUser);   // PUT /api/users/:id
+
+// Rute untuk memicu pengiriman email pengingat belajar secara manual (Khusus Admin)
+router.post("/reminders/send", protect, admin, sendStudyReminders);
 
 export default router;
