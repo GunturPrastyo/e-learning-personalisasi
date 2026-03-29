@@ -174,7 +174,7 @@ export const registerUser = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email, fontSize, fontStyle } = req.body;
+    const { name, email, fontSize, fontStyle, reminderEnabled } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -193,6 +193,11 @@ export const updateUserProfile = async (req, res) => {
     user.name = name || user.name;
     if (fontSize) user.fontSize = fontSize;
     if (fontStyle) user.fontStyle = fontStyle;
+
+    // Tangkap data reminder dari frontend form
+    if (reminderEnabled !== undefined) {
+      user.reminderEnabled = reminderEnabled === 'true' || reminderEnabled === true;
+    }
 
     // Handle upload avatar baru
     if (req.file) {
@@ -285,6 +290,10 @@ export const loginUser = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Perbarui rekam jejak "Aktivitas Terakhir" untuk mencegah pengingat salah sasaran
+    user.lastActiveAt = new Date();
+    await user.save({ validateModifiedOnly: true });
+
     const userObject = user.toObject();
     delete userObject.password;
 
@@ -340,6 +349,7 @@ export const googleAuth = async (req, res) => {
     } else {
       user.name = user.name || name;
       user.avatar = user.avatar || picture;
+      user.lastActiveAt = new Date();
       await user.save({ validateModifiedOnly: true });
     }
 
@@ -601,7 +611,11 @@ export const completeTopic = async (req, res) => {
       return res.status(404).json({ message: "User tidak ditemukan" });
     }
 
-    await User.updateOne({ _id: userId }, { $addToSet: { topicCompletions: topikId } });
+    // Tambahkan rekam jejak aktivitas terakhir saat pengguna belajar
+    await User.updateOne(
+      { _id: userId }, 
+      { $addToSet: { topicCompletions: topikId }, lastActiveAt: new Date() }
+    );
 
     res.status(200).json({ message: "Topik berhasil ditandai selesai" });
   } catch (error) {
@@ -841,5 +855,78 @@ export const updateUserStatus = async (req, res) => {
   } catch (error) {
     console.error("Error updating user status:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// ========================= SEND STUDY REMINDERS =========================
+export const sendStudyReminders = async (req, res) => {
+  try {
+    // Contoh: Cari pengguna yang tidak aktif lebih dari 3 hari
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    // Cari user yang mengaktifkan pengingat, role 'user', dan tidak aktif sejak 3 hari lalu
+    const usersToRemind = await User.find({
+      reminderEnabled: true, // Pastikan field ini ada di model User
+      role: 'user',
+      // Filter user yang belum belajar/online > 3 hari
+      lastActiveAt: { $lt: threeDaysAgo }, 
+      $or: [
+        { lastReminderSentAt: { $lt: threeDaysAgo } }, // Beri jeda 3 hari antar pengingat
+        { lastReminderSentAt: null }, // Atau user yang belum pernah dikirimi email
+        { lastReminderSentAt: { $exists: false } }
+      ]
+    });
+
+    if (usersToRemind.length === 0) {
+      return res.status(200).json({ message: "Tidak ada pengguna yang perlu diingatkan saat ini." });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    let sentCount = 0;
+
+    for (const user of usersToRemind) {
+      const message = `Halo ${user.name}, yuk lanjutkan belajarmu di E-Learning Personalisasi!`;
+      const htmlMessage = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 30px; text-align: center; }
+            .button { background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2 style="color: #111827;">Waktunya Melanjutkan Belajar! 🚀</h2>
+            <p style="color: #4b5563;">Halo <strong>${user.name}</strong>,</p>
+            <p style="color: #4b5563;">Kami perhatikan kamu belum melanjutkan progres belajarmu belakangan ini. Yuk, luangkan waktu sejenak agar target belajarmu bisa segera tercapai!</p>
+            <a href="${frontendUrl}/login" class="button">Lanjutkan Belajar Sekarang</a>
+          </div>
+        </body>
+        </html>
+      `;
+
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Yuk, Lanjutkan Belajarmu! 🚀',
+          message,
+          html: htmlMessage
+        });
+        sentCount++;
+        
+        // Rekam waktu email pengingat dikirim agar sistem tidak spam terus-menerus
+        await User.findByIdAndUpdate(user._id, { lastReminderSentAt: new Date() });
+      } catch (err) {
+        console.error(`Gagal mengirim pengingat ke ${user.email}:`, err);
+      }
+    }
+
+    res.status(200).json({ message: `Berhasil mengirim ${sentCount} email pengingat.` });
+  } catch (error) {
+    console.error("Send Reminder Error:", error);
+    res.status(500).json({ message: "Terjadi kesalahan server" });
   }
 };
