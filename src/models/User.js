@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
   kelas: { type: String, default: null },
   fontSize: { type: String, default: '16px' },
   fontStyle: { type: String, default: 'font-poppins' },
+  reminderEnabled: { type: Boolean, default: true },
+  lastReminderSentAt: { type: Date, default: null },
   topicCompletions: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Topik" }
   ],
