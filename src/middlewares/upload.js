@@ -1,29 +1,23 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 
+// Menggunakan memoryStorage agar file disimpan di buffer, bukan di disk.
+// Ini penting untuk lingkungan serverless seperti Vercel.
+const storage = multer.memoryStorage();
 
-const uploadFolder = path.join(process.cwd(), "public", "uploads");
-
-if (!fs.existsSync(uploadFolder)) {
-  fs.mkdirSync(uploadFolder, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadFolder),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}${ext}`);
-  },
-});
-
+// Filter untuk memastikan hanya tipe file tertentu yang diizinkan.
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
+  // Izinkan gambar dan PDF. Anda bisa menambahkan tipe file lain di sini.
+  if (file.mimetype.startsWith("image/") || file.mimetype === 'application/pdf') {
     cb(null, true);
   } else {
-    cb(new Error("Hanya file gambar yang diperbolehkan"), false);
+    cb(new Error("Tipe file tidak didukung. Hanya gambar dan PDF yang diperbolehkan."), false);
   }
 };
 
-
-export const upload = multer({ storage, fileFilter });
+// Konfigurasi multer dengan storage dan file filter.
+// Tambahkan batas ukuran file jika diperlukan, misalnya 5MB.
+export const upload = multer({ 
+  storage, 
+  fileFilter,
+  limits: { fileSize: 1024 * 1024 * 5 } // 5 MB limit
+});
