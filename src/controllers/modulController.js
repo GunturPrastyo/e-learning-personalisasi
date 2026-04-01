@@ -8,6 +8,7 @@ import Materi from "../models/Materi.js";
 import Question from "../models/Question.js";
 import User from "../models/User.js";
 import { hasCompletedModulePostTest, isModuleLockedForUser } from "./resultController.js";
+import { put, del } from "@vercel/blob";
 
 export const getModules = async (req, res) => {
   try {
@@ -256,7 +257,17 @@ export const getModuleById = async (req, res) => {
 export const createModule = async (req, res) => {
   try {
     const { title, category, overview, slug } = req.body;
-    const icon = req.file ? req.file.filename : null;
+    let icon = null;
+
+    if (req.file) {
+      const originalName = req.file.originalname || `icon-${Date.now()}`;
+      const blobName = `moduls/${Date.now()}-${originalName}`;
+      const { url } = await put(blobName, req.file.buffer, {
+        access: 'public',
+        contentType: req.file.mimetype,
+      });
+      icon = url;
+    }
 
     const modul = new Modul({ title, category, overview, slug, icon });
     await modul.save();
@@ -292,14 +303,20 @@ export const updateModul = async (req, res) => {
     modul.slug = slug || modul.slug;
 
     if (req.file) {
-      if (modul.icon) {
-        const __dirname = path.dirname(new URL(import.meta.url).pathname.substring(1));
-        const oldPath = path.join(__dirname, "..", "..", "public", "uploads", modul.icon);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
+      if (modul.icon && modul.icon.includes("blob.vercel-storage.com")) {
+        try {
+          await del(modul.icon);
+        } catch (err) {
+          console.error("Gagal menghapus icon lama dari Vercel Blob:", err);
         }
       }
-      modul.icon = req.file.filename;
+      const originalName = req.file.originalname || `icon-${Date.now()}`;
+      const blobName = `moduls/${Date.now()}-${originalName}`;
+      const { url } = await put(blobName, req.file.buffer, {
+        access: 'public',
+        contentType: req.file.mimetype,
+      });
+      modul.icon = url;
     }
 
     const updatedModul = await modul.save();
@@ -333,11 +350,11 @@ export const deleteModul = async (req, res) => {
       return res.status(404).json({ message: "Modul tidak ditemukan" });
     }
 
-    if (modul.icon) {
-      const __dirname = path.dirname(new URL(import.meta.url).pathname.substring(1));
-      const iconPath = path.join(__dirname, "..", "..", "public", "uploads", modul.icon);
-      if (fs.existsSync(iconPath)) {
-        fs.unlinkSync(iconPath);
+    if (modul.icon && modul.icon.includes("blob.vercel-storage.com")) {
+      try {
+        await del(modul.icon);
+      } catch (err) {
+        console.error("Gagal menghapus icon modul dari Vercel Blob:", err);
       }
     }
 
