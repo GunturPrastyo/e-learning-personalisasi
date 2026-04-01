@@ -20,6 +20,7 @@
     "@google/generative-ai": "^0.24.1",
     "@tailwindcss/typography": "^0.5.19",
     "@tiptap/extension-placeholder": "^3.7.2",
+    "@vercel/blob": "^2.3.2",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
