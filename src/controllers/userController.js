@@ -11,6 +11,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
 import sendEmail from "../utils/sendEmail.js";
+import { put, del } from "@vercel/blob";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -202,19 +203,20 @@ export const updateUserProfile = async (req, res) => {
     // Handle upload avatar baru
     if (req.file) {
       
-      if (user.avatar && !user.avatar.startsWith("http") && !user.avatar.includes("placeholder")) {
-        const avatarFileName = path.basename(user.avatar);
-        const oldPath = path.join(__dirname, "..", "..", "public", "uploads", avatarFileName);
+      if (user.avatar && user.avatar.includes("blob.vercel-storage.com")) {
         try {
-          await fs.access(oldPath); // Cek apakah file ada
-          await fs.unlink(oldPath); // Hapus secara async
+          await del(user.avatar);
         } catch (err) {
-          if (err.code !== 'ENOENT') {
-            console.error("Gagal menghapus avatar lama:", err);
-          }
+          console.error("Gagal menghapus avatar lama dari Vercel Blob:", err);
         }
       }
-      user.avatar = req.file.filename;
+      const originalName = req.file.originalname || `avatar-${Date.now()}`;
+      const blobName = `avatars/${Date.now()}-${originalName}`;
+      const { url } = await put(blobName, req.file.buffer, {
+        access: 'public',
+        contentType: req.file.mimetype,
+      });
+      user.avatar = url;
     }
 
     await user.save();
