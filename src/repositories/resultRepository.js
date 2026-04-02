@@ -74,3 +74,7 @@ export const findFeatures = async (query = {}) => {
 export const findUsers = async (query = {}, selectOptions = "") => {
   return await User.find(query).select(selectOptions);
 };
+
+export const aggregateUsers = async (pipeline) => {
+  return await User.aggregate(pipeline);
+};
