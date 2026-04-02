@@ -1360,12 +1360,12 @@ export const getTopicsToReinforceForUser = async (userId) => {
     },
     { $sort: { latestScore: 1 } },
     { $lookup: { from: "topiks", localField: "_id", foreignField: "_id", as: "topicDetails" } },
-    { $unwind: { path: "$topicDetails", preserveNullAndEmptyArrays: true } },
-    { $match: { topicDetails: { $ne: [] } } },
+    { $match: { topicDetails: { $ne: [] } } }, // Filter out results where the topic might have been deleted
+    { $unwind: "$topicDetails" }, // Now it's safe to unwind
     {
       $project: {
         _id: 0,
-        topicTitle: { $arrayElemAt: ["$topicDetails.title", 0] },
+        topicTitle: "$topicDetails.title",
         score: { $round: ["$latestScore", 2] },
         weakSubTopics: { $ifNull: ["$weakSubTopics", []] }, 
         status: {
@@ -1441,7 +1441,18 @@ export const getSubTopicPerformanceForUser = async (userId) => {
 };
 
 export const getStreakLeaderboardData = async () => {
-  const leaderboard = await resultRepository.findUsers({ role: 'user', dailyStreak: { $gt: 0 } }, 'name avatar dailyStreak');
+  const leaderboard = await resultRepository.aggregateUsers([
+    { $match: { role: 'user', dailyStreak: { $gt: 0 } } },
+    {
+      $project: {
+        name: 1,
+        avatar: 1,
+        dailyStreak: 1,
+        totalCompletedTopics: { $size: { $ifNull: ["$topicCompletions", []] } } // Calculate total completed topics
+      }
+    },
+    { $sort: { dailyStreak: -1, totalCompletedTopics: -1 } } // Sort by streak, then by completed topics
+  ]);
   return leaderboard;
 };
 
