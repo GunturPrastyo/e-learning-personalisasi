@@ -7,7 +7,7 @@ import Topik from "../models/Topik.js";
 import Materi from "../models/Materi.js";
 import Question from "../models/Question.js";
 import User from "../models/User.js";
-import { hasCompletedModulePostTest, isModuleLockedForUser } from "./resultController.js";
+import { hasCompletedModulePostTest, isModuleLockedForUser } from "../services/resultService.js";
 import { put, del } from "@vercel/blob";
 
 export const getModules = async (req, res) => {
